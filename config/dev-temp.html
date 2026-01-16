@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Estimation and Rounding Off</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: #000814;
+      background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    /* Stars background */
+    .stars {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    
+    .star {
+      position: absolute;
+      background-color: white;
+      border-radius: 50%;
+      animation: twinkle var(--twinkle-duration) infinite ease-in-out;
+    }
+    
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.2; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+    
+    .card {
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      width: 80%;
+      max-width: 950px;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    h2, h3 {
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+    
+    svg { width: 100%; height: auto; }
+    .caption {
+      font-size: 1rem;
+      margin-top: 12px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 8px 16px;
+      border-radius: 10px;
+      display: inline-block;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    button, select {
+      margin: 8px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #replayBtn { 
+      background: linear-gradient(90deg, #ff7b54, #ff5a9e); 
+      color: #fff; 
+      display: none; 
+      box-shadow: 0 4px 15px rgba(255, 123, 84, 0.4);
+    }
+    #pauseBtn { 
+      background: linear-gradient(90deg, #4CAF50, #45a049); 
+      color: #fff; 
+      box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+    }
+    #replayBtn:hover { 
+      background: linear-gradient(90deg, #ff5722, #e64a19);
+      box-shadow: 0 6px 20px rgba(255, 87, 34, 0.6);
+    }
+    #pauseBtn:hover { 
+      background: linear-gradient(90deg, #2e7d32, #1b5e20);
+      box-shadow: 0 6px 20px rgba(46, 125, 50, 0.6);
+    }
+    select { 
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      font-weight: normal;
+      padding: 6px 12px;
+    }
+    select option {
+      background: #1b2735;
+      color: #ffffff;
+    }
+    .numText { 
+      font-weight: bold; 
+      font-size: 28px; 
+      fill: #ffffff; 
+      text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    }
+    .rounded { 
+      font-weight: bold; 
+      font-size: 26px; 
+      fill: #4CAF50; 
+      opacity: 0;
+      text-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+    }
+    .rule { 
+      font-weight: bold; 
+      font-size: 22px; 
+      fill: #2196F3; 
+      opacity: 0;
+      text-shadow: 0 0 5px rgba(33, 150, 243, 0.5);
+    }
+    .nav-btn, .finish-btn {
+      background: linear-gradient(90deg,#ff7b54,#ff5a9e);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .finish-btn { 
+      position: fixed; 
+      right: 18px; 
+      bottom: 18px; 
+      z-index: 1200;
+      box-shadow: 0 8px 20px rgba(255, 123, 84, 0.4);
+    }
+    
+    /* Make SVG background transparent */
+    svg {
+      background: transparent;
+    }
+    
+    /* Add glow effect to the rectangle */
+    #example1 rect {
+      fill: rgba(255, 217, 61, 0.8);
+      filter: drop-shadow(0 0 10px rgba(255, 217, 61, 0.7));
+    }
+  </style>
+</head>
+<body>
+  <!-- Stars container -->
+  <div class="stars" id="starsContainer"></div>
+  
+  <div class="card">
+    <h2 id="mainTitle">Knowing Our Numbers</h2>
+    <h3 id="subTitle">Estimation and Rounding Off</h3>
+
+    <!-- Language selector -->
+    <label for="langSelect" style="color: #ffffff;">🌐 Choose Language: </label>
+    <select id="langSelect">
+      <option value="en">English</option>
+      <option value="hi">हिन्दी (Hindi)</option>
+      <option value="ta">தமிழ் (Tamil)</option>
+      <option value="te">తెలుగు (Telugu)</option>
+      <option value="or">ଓଡ଼ିଆ (Odia)</option>
+    </select>
+
+    <svg viewBox="0 0 1000 500">
+      <!-- Base example -->
+      <g id="example1">
+        <rect x="350" y="50" width="250" height="90" rx="15" fill="#FFD93D"/>
+        <text class="numText" x="475" y="110" text-anchor="middle">76,543</text>
+      </g>
+      <text id="round10" class="rounded" x="475" y="200" text-anchor="middle">Nearest 10 → 76,540</text>
+      <text id="round100" class="rounded" x="475" y="250" text-anchor="middle">Nearest 100 → 76,500</text>
+      <text id="round1000" class="rounded" x="475" y="300" text-anchor="middle">Nearest 1000 → 77,000</text>
+
+      <!-- Rule text -->
+      <text id="rule" class="rule" x="500" y="360" text-anchor="middle">Rule: If digit < 5 → Round Down | If digit ≥ 5 → Round Up</text>
+
+      <!-- More examples -->
+      <text id="ex2" class="rounded" x="475" y="400" text-anchor="middle">42 → 40</text>
+      <text id="ex3" class="rounded" x="475" y="430" text-anchor="middle">47 → 50</text>
+      <text id="ex4" class="rounded" x="475" y="460" text-anchor="middle">1,234 → 1,000</text>
+      <text id="ex5" class="rounded" x="475" y="490" text-anchor="middle">8,765 → 9,000</text>
+    </svg>
+
+    <div id="caption" class="caption">Let's learn Estimation and Rounding Off!</div>
+    <br>
+    <button id="pauseBtn">⏸ Pause</button>
+    <button id="replayBtn">🔄 Replay</button>
+    <button id="videoFinishBtn" class="nav-btn finish-btn">Finish</button>
+  </div>
+
+  <script>
+    // Create twinkling stars
+    function createStars() {
+      const starsContainer = document.getElementById('starsContainer');
+      const starCount = 150;
+      
+      for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        
+        // Random position
+        const left = Math.random() * 100;
+        const top = Math.random() * 100;
+        
+        // Random size
+        const size = Math.random() * 3;
+        
+        // Random twinkle duration
+        const duration = 2 + Math.random() * 5;
+        
+        // Random delay before starting animation
+        const delay = Math.random() * 5;
+        
+        star.style.left = `${left}%`;
+        star.style.top = `${top}%`;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.setProperty('--twinkle-duration', `${duration}s`);
+        star.style.animationDelay = `${delay}s`;
+        
+        starsContainer.appendChild(star);
+      }
+    }
+    
+    // Initialize stars when page loads
+    createStars();
+
+    const caption = document.getElementById("caption");
+    const replayBtn = document.getElementById("replayBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const langSelect = document.getElementById("langSelect");
+    const mainTitle = document.getElementById("mainTitle");
+    const subTitle = document.getElementById("subTitle");
+
+    let paused = false;
+    let currentStepIndex = 0;
+    let currentLang = "en";
+
+    // Multilingual content
+    const translations = {
+      en: {
+        mainTitle: "Knowing Our Numbers",
+        subTitle: "Estimation and Rounding Off",
+        captions: [
+          "Let's learn Estimation and Rounding Off!",
+          "We start with the number seventy-six thousand, five hundred forty-three.",
+          "Rounding to the nearest 10 → Look at the ones digit (3). Since 3 < 5, round down to 76,540.",
+          "Rounding to the nearest 100 → Look at the tens digit (4). Since 4 < 5, round down to 76,500.",
+          "Rounding to the nearest 1000 → Look at the hundreds digit (5). Since 5 ≥ 5, round up to 77,000.",
+          "Rule: If digit < 5 → Round Down. If digit ≥ 5 → Round Up.",
+          "Example: 42 rounds to 40.",
+          "Example: 47 rounds to 50.",
+          "Example: 1,234 rounds to 1,000.",
+          "Example: 8,765 rounds to 9,000."
+        ],
+        svgText: {
+          round10: "Nearest 10 → 76,540",
+          round100: "Nearest 100 → 76,500",
+          round1000: "Nearest 1000 → 77,000",
+          rule: "Rule: If digit < 5 → Round Down | If digit ≥ 5 → Round Up",
+          ex2: "42 → 40",
+          ex3: "47 → 50",
+          ex4: "1,234 → 1,000",
+          ex5: "8,765 → 9,000"
+        },
+        buttons: {
+          pause: "⏸ Pause",
+          play: "▶ Play",
+          replay: "🔄 Replay",
+          finish: "Finish"
+        }
+      },
+      hi: {
+        mainTitle: "हमारी संख्याओं को जानना",
+        subTitle: "अनुमान और पूर्णांकन",
+        captions: [
+          "चलो अनुमान और पूर्णांकन सीखते हैं!",
+          "हम संख्या छिहत्तर हजार पांच सौ तियालीस से शुरू करते हैं।",
+          "निकटतम 10 तक पूर्णांकित करना → इकाई अंक (3) देखें। चूंकि 3 < 5, इसे 76,540 तक घटाकर पूर्णांकित करें।",
+          "निकटतम 100 तक पूर्णांकित करना → दहाई अंक (4) देखें। चूंकि 4 < 5, इसे 76,500 तक घटाकर पूर्णांकित करें।",
+          "निकटतम 1000 तक पूर्णांकित करना → सैकड़ा अंक (5) देखें। चूंकि 5 ≥ 5, इसे 77,000 तक बढ़ाकर पूर्णांकित करें।",
+          "नियम: यदि अंक < 5 → घटाकर पूर्णांकित करें। यदि अंक ≥ 5 → बढ़ाकर पूर्णांकित करें।",
+          "उदाहरण: 42 को 40 तक पूर्णांकित करें।",
+          "उदाहरण: 47 को 50 तक पूर्णांकित करें।",
+          "उदाहरण: 1,234 को 1,000 तक पूर्णांकित करें।",
+          "उदाहरण: 8,765 को 9,000 तक पूर्णांकित करें।"
+        ],
+        svgText: {
+          round10: "निकटतम 10 → 76,540",
+          round100: "निकटतम 100 → 76,500",
+          round1000: "निकटतम 1000 → 77,000",
+          rule: "नियम: यदि अंक < 5 → घटाकर पूर्णांकित करें | यदि अंक ≥ 5 → बढ़ाकर पूर्णांकित करें",
+          ex2: "42 → 40",
+          ex3: "47 → 50",
+          ex4: "1,234 → 1,000",
+          ex5: "8,765 → 9,000"
+        },
+        buttons: {
+          pause: "⏸ रोकें",
+          play: "▶ चलाएं",
+          replay: "🔄 फिर से चलाएं",
+          finish: "समाप्त"
+        }
+      },
+      ta: {
+        mainTitle: "எண்களை அறிதல்",
+        subTitle: "மதிப்பீடு மற்றும் வட்டிடுதல்",
+        captions: [
+          "மதிப்பீடு மற்றும் வட்டிடுதலைக் கற்றுக்கொள்வோம்!",
+          "நாம் எழுபத்தாறு ஆயிரம் ஐந்நூறு நாற்பத்தொன்பது என்ற எண்ணுடன் தொடங்குகிறோம்.",
+          "அருகிலுள்ள 10 க்கு வட்டிடுதல் → ஒன்றுகளின் இலக்கத்தை (3) பாருங்கள். 3 < 5 என்பதால், 76,540 க்கு குறைத்து வட்டிடுங்கள்.",
+          "அருகிலுள்ள 100 க்கு வட்டிடுதல் → பத்துகளின் இலக்கத்தை (4) பாருங்கள். 4 < 5 என்பதால், 76,500 க்கு குறைத்து வட்டிடுங்கள்.",
+          "அருகிலுள்ள 1000 க்கு வட்டிடுதல் → நூறுகளின் இலக்கத்தை (5) பாருங்கள். 5 ≥ 5 என்பதால், 77,000 க்கு அதிகரித்து வட்டிடுங்கள்.",
+          "விதி: இலக்கம் < 5 என்றால் → குறைத்து வட்டிடுங்கள். இலக்கம் ≥ 5 என்றால் → அதிகரித்து வட்டிடுங்கள்.",
+          "எடுத்துக்காட்டு: 42 ஐ 40 ஆக வட்டிடுங்கள்.",
+          "எடுத்துக்காட்டு: 47 ஐ 50 ஆக வட்டிடுங்கள்.",
+          "எடுத்துக்காட்டு: 1,234 ஐ 1,000 ஆக வட்டிடுங்கள்.",
+          "எடுத்துக்காட்டு: 8,765 ஐ 9,000 ஆக வட்டிடுங்கள்."
+        ],
+        svgText: {
+          round10: "அருகிலுள்ள 10 → 76,540",
+          round100: "அருகிலுள்ள 100 → 76,500",
+          round1000: "அருகிலுள்ள 1000 → 77,000",
+          rule: "விதி: இலக்கம் < 5 → குறைத்து வட்டிடுங்கள் | இலக்கம் ≥ 5 → அதிகரித்து வட்டிடுங்கள்",
+          ex2: "42 → 40",
+          ex3: "47 → 50",
+          ex4: "1,234 → 1,000",
+          ex5: "8,765 → 9,000"
+        },
+        buttons: {
+          pause: "⏸ இடைநிறுத்து",
+          play: "▶ இயக்கு",
+          replay: "🔄 மீண்டும் இயக்கு",
+          finish: "முடிக்க"
+        }
+      },
+      te: {
+        mainTitle: "మన సంఖ్యలను తెలుసుకోవడం",
+        subTitle: "అంచనా మరియు పట్టుకోవడం",
+        captions: [
+          "అంచనా మరియు పట్టుకోవడం నేర్చుకుందాం!",
+          "మేము డెబ్బై ఆరు వేల ఐదు వందల నలభై మూడు అనే సంఖ్యతో ప్రారంభిస్తాము.",
+          "సమీప 10కి పట్టుకోవడం → ఒకట్ల అంకెను (3) చూడండి. 3 < 5 కాబట్టి, 76,540కి తగ్గించి పట్టుకోండి.",
+          "సమీప 100కి పట్టుకోవడం → పదుల అంకెను (4) చూడండి. 4 < 5 కాబట్టి, 76,500కి తగ్గించి పట్టుకోండి.",
+          "సమీప 1000కి పట్టుకోవడం → వందల అంకెను (5) చూడండి. 5 ≥ 5 కాబట్టి, 77,000కి పెంచి పట్టుకోండి.",
+          "నియమం: అంకె < 5 అయితే → తగ్గించి పట్టుకోండి. అంకె ≥ 5 అయితే → పెంచి పట్టుకోండి.",
+          "ఉదాహరణ: 42ని 40కి పట్టుకోండి.",
+          "ఉదాహరణ: 47ని 50కి పట్టుకోండి.",
+          "ఉదాహరణ: 1,234ని 1,000కి పట్టుకోండి.",
+          "ఉదాహరణ: 8,765ని 9,000కి పట్టుకోండి."
+        ],
+        svgText: {
+          round10: "సమీప 10 → 76,540",
+          round100: "సమీప 100 → 76,500",
+          round1000: "సమీప 1000 → 77,000",
+          rule: "నియమం: అంకె < 5 → తగ్గించి పట్టుకోండి | అంకె ≥ 5 → పెంచి పట్టుకోండి",
+          ex2: "42 → 40",
+          ex3: "47 → 50",
+          ex4: "1,234 → 1,000",
+          ex5: "8,765 → 9,000"
+        },
+        buttons: {
+          pause: "⏸ విరామం",
+          play: "▶ ప్లే",
+          replay: "🔄 మళ్ళీ ప్లే",
+          finish: "ముగింపు"
+        }
+      },
+      or: {
+        mainTitle: "ଆମର ସଂଖ୍ୟାଗୁଡ଼ିକୁ ଜାଣିବା",
+        subTitle: "ଆକଳନ ଏବଂ ପରିପୂର୍ଣ୍ଣ କରିବା",
+        captions: [
+          "ଆସନ୍ତୁ ଆକଳନ ଏବଂ ପରିପୂର୍ଣ୍ଣ କରିବା ଶିଖିବା!",
+          "ଆମେ ସଂଖ୍ୟା ସତୁରୀ ହଜାର ପାଞ୍ଚ ଶହ ତିରିଶିଆ ରୁ ଆରମ୍ଭ କରୁ।",
+          "ନିକଟତମ 10 ରେ ପରିପୂର୍ଣ୍ଣ କରିବା → ଏକକ ଅଙ୍କ (3) ଦେଖନ୍ତୁ। ଯେହେତୁ 3 < 5, 76,540 କୁ କମାଇ ପରିପୂର୍ଣ୍ଣ କରନ୍ତୁ।",
+          "ନିକଟତମ 100 ରେ ପରିପୂର୍ଣ୍ଣ କରିବା → ଦଶକ ଅଙ୍କ (4) ଦେଖନ୍ତୁ। ଯେହେତୁ 4 < 5, 76,500 କୁ କମାଇ ପରିପୂର୍ଣ୍ଣ କରନ୍ତୁ।",
+          "ନିକଟତମ 1000 ରେ ପରିପୂର୍ଣ୍ଣ କରିବା → ଶହେ ଅଙ୍କ (5) ଦେଖନ୍ତୁ। ଯେହେତୁ 5 ≥ 5, 77,000 କୁ ବଢ଼ାଇ ପରିପୂର୍ଣ୍ଣ କରନ୍ତୁ।",
+          "ନିୟମ: ଯଦି ଅଙ୍କ < 5 → କମାଇ ପରିପୂର୍ଣ୍ଣ କରନ୍ତୁ। ଯଦି ଅଙ୍କ ≥ 5 → ବଢ଼ାଇ ପରିପୂର୍ଣ୍ଣ କରନ୍ତୁ।",
+          "ଉଦାହରଣ: 42 କୁ 40 ରେ ପରିପୂର୍ଣ୍ଣ କରନ୍ତୁ।",
+          "ଉଦାହରଣ: 47 କୁ 50 ରେ ପରିପୂର୍ଣ୍ଣ କରନ୍ତୁ।",
+          "ଉଦାହରଣ: 1,234 କୁ 1,000 ରେ ପରିପୂର୍ଣ୍ଣ କରନ୍ତୁ।",
+          "ଉଦାହରଣ: 8,765 କୁ 9,000 ରେ ପରିପୂର୍ଣ୍ଣ କରନ୍ତୁ।"
+        ],
+        svgText: {
+          round10: "ନିକଟତମ 10 → 76,540",
+          round100: "ନିକଟତମ 100 → 76,500",
+          round1000: "ନିକଟତମ 1000 → 77,000",
+          rule: "ନିୟମ: ଯଦି ଅଙ୍କ < 5 → କମାଇ ପରିପୂର୍ଣ୍ଣ କରନ୍ତୁ | ଯଦି ଅଙ୍କ ≥ 5 → ବଢ଼ାଇ ପରିପୂର୍ଣ୍ଣ କରନ୍ତୁ",
+          ex2: "42 → 40",
+          ex3: "47 → 50",
+          ex4: "1,234 → 1,000",
+          ex5: "8,765 → 9,000"
+        },
+        buttons: {
+          pause: "⏸ ବିରାମ",
+          play: "▶ ଚଲାନ୍ତୁ",
+          replay: "🔄 ପୁନଃ ଚଲାନ୍ତୁ",
+          finish: "ସମାପ୍ତ"
+        }
+      }
+    };
+
+    const voicesMap = { 
+      en: "en-IN", 
+      hi: "hi-IN", 
+      ta: "ta-IN", 
+      te: "te-IN", 
+      or: "or-IN" 
+    };
+
+    // Function to update all text elements based on selected language
+    function updateLanguage() {
+      currentLang = langSelect.value;
+      const langData = translations[currentLang];
+      
+      // Update titles
+      mainTitle.textContent = langData.mainTitle;
+      subTitle.textContent = langData.subTitle;
+      
+      // Update SVG text elements
+      document.getElementById('round10').textContent = langData.svgText.round10;
+      document.getElementById('round100').textContent = langData.svgText.round100;
+      document.getElementById('round1000').textContent = langData.svgText.round1000;
+      document.getElementById('rule').textContent = langData.svgText.rule;
+      document.getElementById('ex2').textContent = langData.svgText.ex2;
+      document.getElementById('ex3').textContent = langData.svgText.ex3;
+      document.getElementById('ex4').textContent = langData.svgText.ex4;
+      document.getElementById('ex5').textContent = langData.svgText.ex5;
+      
+      // Update button text
+      pauseBtn.textContent = langData.buttons.pause;
+      replayBtn.textContent = langData.buttons.replay;
+      document.getElementById('videoFinishBtn').textContent = langData.buttons.finish;
+      
+      // Update initial caption
+      caption.textContent = langData.captions[0];
+    }
+
+    function speak(text, lang, callback) {
+      if (paused) return;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = voicesMap[lang] || "en-IN";
+      utterance.rate = 0.95;
+      utterance.onend = () => { if (!paused) callback(); };
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function runStep() {
+      if (currentStepIndex >= translations[currentLang].captions.length) {
+        replayBtn.style.display = "inline-block";
+        return;
+      }
+      caption.textContent = translations[currentLang].captions[currentStepIndex];
+
+      // Animations
+      if (currentStepIndex === 1) gsap.to("#example1", {duration: 1, scale: 1.1, yoyo: true, repeat: 1});
+      if (currentStepIndex === 2) gsap.to("#round10", {duration: 1, opacity: 1, y: -10});
+      if (currentStepIndex === 3) gsap.to("#round100", {duration: 1, opacity: 1, y: -10});
+      if (currentStepIndex === 4) gsap.to("#round1000", {duration: 1, opacity: 1, y: -10});
+      if (currentStepIndex === 5) gsap.to("#rule", {duration: 1, opacity: 1});
+      if (currentStepIndex === 6) gsap.to("#ex2", {duration: 1, opacity: 1});
+      if (currentStepIndex === 7) gsap.to("#ex3", {duration: 1, opacity: 1});
+      if (currentStepIndex === 8) gsap.to("#ex4", {duration: 1, opacity: 1});
+      if (currentStepIndex === 9) gsap.to("#ex5", {duration: 1, opacity: 1});
+
+      speak(translations[currentLang].captions[currentStepIndex], currentLang, () => {
+        currentStepIndex++;
+        if (!paused) runStep();
+      });
+    }
+
+    function playAnimation() {
+      replayBtn.style.display = "none";
+      paused = false;
+      currentStepIndex = 0;
+      currentLang = langSelect.value;
+
+      gsap.set(["#round10","#round100","#round1000","#rule","#ex2","#ex3","#ex4","#ex5"], {opacity:0, y:0});
+      gsap.set("#example1", {scale:1});
+
+      runStep();
+    }
+
+    pauseBtn.addEventListener("click", () => {
+      if (!paused) {
+        paused = true;
+        window.speechSynthesis.cancel();
+        pauseBtn.textContent = translations[currentLang].buttons.play;
+      } else {
+        paused = false;
+        pauseBtn.textContent = translations[currentLang].buttons.pause;
+        runStep();
+      }
+    });
+
+    replayBtn.addEventListener("click", playAnimation);
+
+    // Language change event
+    langSelect.addEventListener("change", () => {
+      updateLanguage();
+      if (!paused) {
+        window.speechSynthesis.cancel();
+        playAnimation();
+      }
+    });
+
+    // Initialize with default language
+    updateLanguage();
+    playAnimation();
+
+    // Finish button: save progress, show confetti, then navigate back to chapter
+    const videoFinishBtn = document.getElementById('videoFinishBtn');
+    videoFinishBtn?.addEventListener('click', ()=>{
+      try {
+        const key = 'aurraa:chapter1:progress';
+        const data = JSON.parse(localStorage.getItem(key) || '{}');
+        data['estimation'] = true;
+        localStorage.setItem(key, JSON.stringify(data));
+      } catch(e) { }
+
+      // Increment badge when finished
+      try { if (window.AURRAA && window.AURRAA.badge && typeof window.AURRAA.badge.inc === 'function') window.AURRAA.badge.inc(1); else window.dispatchEvent(new CustomEvent('aurraa:levelCompleted')); } catch(e){}
+
+      if (window.confetti) confetti({ particleCount: 60, spread: 55, origin: { y: 0.6 } });
+      setTimeout(()=> window.location.href = 'game-g6-rounding.html?open=estimation', 700);
+    });
+  </script>
+</body>
+</html>

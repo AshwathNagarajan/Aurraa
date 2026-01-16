@@ -254,6 +254,7 @@ h3 {
   <div class="controls">
     <button id="pauseBtn">⏸ Pause</button>
     <button id="replayBtn">🔄 Replay</button>
+    <button id="finishBtn" style="background: #2196F3; color: #fff;">✓ Finish</button>
   </div>
 </div>
 
@@ -498,6 +499,11 @@ langSelect.addEventListener("change", () => {
   document.querySelectorAll('.force-arrow').forEach(el => el.remove());
   gsap.set(["#charge1", "#charge2", "#charge3"], {opacity:0, x:0, y:0, scale:0.8});
   runStep();
+});
+
+// Add finish button handler
+document.getElementById("finishBtn").addEventListener("click", () => {
+  window.location.href = "game-g12-coulumns.html";
 });
 
 // Initialize animation

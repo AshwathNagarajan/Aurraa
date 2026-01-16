@@ -662,6 +662,9 @@
 <body>
     <div id="root"></div>
 
+        <!-- Finish button: navigates to quiz for Chapter 1 -->
+        <button id="finishBtn" class="finish-btn" style="position:fixed;right:18px;bottom:18px;background:linear-gradient(90deg,#ff7b54,#ff5a9e);color:#fff;padding:10px 16px;border-radius:12px;border:none;box-shadow:0 8px 20px rgba(0,0,0,0.12);font-weight:700;cursor:pointer;z-index:1200;">Finish</button>
+
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
@@ -2062,5 +2065,18 @@
 
         ReactDOM.render(<App />, document.getElementById('root'));
     </script>
+        <script>
+            // Finish button handler: save a progress marker and go to the quiz
+            document.getElementById('finishBtn')?.addEventListener('click', function(){
+                try {
+                    const key = 'aurraa:grade12:chem:chapter1:progress';
+                    const data = JSON.parse(localStorage.getItem(key) || '{}');
+                    data['visited_game'] = true;
+                    localStorage.setItem(key, JSON.stringify(data));
+                } catch(e) { }
+                if (window.confetti) confetti({ particleCount: 60, spread: 55, origin: { y: 0.6 } });
+                setTimeout(()=> { window.location.href = '/quiz/quiz-g12-chem-ch1.html'; }, 300);
+            });
+        </script>
 </body>
 </html>

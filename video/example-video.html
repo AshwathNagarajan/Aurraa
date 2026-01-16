@@ -68,6 +68,7 @@
       to { opacity: 1; }
     }
   </style>
+  <link rel="stylesheet" href="../styles/badge.css">
 </head>
 <body>
   <div class="card">
@@ -138,7 +139,6 @@
     <br>
     <button id="pauseBtn">⏸ Pause</button>
     <button id="replayBtn">🔄 Replay</button>
-    <button id="videoFinishBtn" class="nav-btn finish-btn">Finish</button>
   </div>
 
   <script>
@@ -276,8 +276,6 @@
     });
 
     playAnimation();
-    const videoFinishBtn = document.getElementById('videoFinishBtn');
-  videoFinishBtn?.addEventListener('click', ()=>{ try{ const key='aurraa:chapter1:progress'; const data=JSON.parse(localStorage.getItem(key)||'{}'); data['comparison']=true; localStorage.setItem(key, JSON.stringify(data)); } catch(e){} if(window.confetti) confetti({ particleCount: 60, spread: 55, origin: { y: 0.6 } }); setTimeout(()=> window.location.href = '/math-g6-ch1-game.html?open=comparison',700); });
   </script>
   <script src="../utils/badge.js"></script>
 </body>
